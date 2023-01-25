@@ -1,19 +1,32 @@
 #pragma once
 
-#include <memory>
 #include "Field.h"
 
 
 class GameOfLife
 {
     public:
-        GameOfLife(unsigned int xAreaSize, unsigned int yAreaSize, unsigned int xViewSize, unsigned int yViewSize);
+        GameOfLife(size_t xAreaSize, size_t yAreaSize, size_t xViewSize, size_t yViewSize);
         ~GameOfLife();
 
+    public:
+        void startTheGame(unsigned int ages);
+
     private:
-        const unsigned int m_xAreaSize;
-        const unsigned int m_yAreaSize;
-        unsigned int m_xViewSize;
-        unsigned int m_yViewSize;
-        Field **area;
+        bool initializeArea();
+        void markDieCells() noexcept;
+        void show() const noexcept;
+
+    private:
+        const size_t m_xAreaSize;
+        const size_t m_yAreaSize;
+        Field** area;
+
+        size_t m_xViewSize;
+        size_t m_yViewSize;
+        size_t m_xViewStartIndex;
+        size_t m_yViewStartIndex;
+
+
+        bool m_isInitialized;
 };

@@ -3,13 +3,8 @@
 
 int main()
 {
-    system("MODE CON COLS=200 LINES=200");
+    system("MODE CON LINES=60 COLS=210");
 
-    GameOfLife game_of_life(500, 500, 200, 200);
-
-    // Adat
-
-    // Muveletek
-
-    // megjelenites
+    GameOfLife game_of_life(500, 500, 50, 200);
+    game_of_life.startTheGame(2);
 }
