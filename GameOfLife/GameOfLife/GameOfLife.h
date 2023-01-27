@@ -10,11 +10,17 @@ class GameOfLife
         ~GameOfLife();
 
     public:
-        void startTheGame(unsigned int ages);
+        void startTheGame(unsigned int ages = 1, bool fromFile = false);
 
     private:
-        bool initializeArea();
+        bool initializeAreaRandomly();
+        bool initializeAreaFromFile();
         void markDieCells() noexcept;
+        void birthNewCells() noexcept;
+        void removeDeadCells() noexcept;
+
+    private:
+        unsigned char neighborCounter(size_t& i, size_t& j) noexcept;
         void show() const noexcept;
 
     private:

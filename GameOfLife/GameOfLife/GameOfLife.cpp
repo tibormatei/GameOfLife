@@ -1,7 +1,7 @@
 #include "GameOfLife.h"
+#include <windows.h>
 #include <new>
 #include <iostream>
-#include <cstdlib>
 
 using std::cout;
 using std::endl;
@@ -61,25 +61,41 @@ GameOfLife::~GameOfLife()
     }
 }
 
-void GameOfLife::startTheGame(unsigned int ages = 1)
+void GameOfLife::startTheGame(unsigned int ages, bool fromFile)
 {
-    initializeArea();
-
-    unsigned int age = ages;
-    while (age)
+    if (m_isInitialized)
     {
-        markDieCells();
-        show();
-        --age;
+        bool initedArea = false;
+        if (fromFile)
+        {
+            initedArea = initializeAreaFromFile();
+        }
+        else
+        {
+            initedArea = initializeAreaRandomly();
+        }
+
+        if (initedArea)
+        {
+            unsigned int age = ages;
+            while (age)
+            {
+                show();
+                markDieCells();
+                birthNewCells();
+                removeDeadCells();
+                --age;
+            }
+        }
     }
 }
 
-bool GameOfLife::initializeArea()
+bool GameOfLife::initializeAreaRandomly()
 {
     std::srand(std::time(0));
-    for (size_t i = m_xViewStartIndex; i < m_xViewSize; ++i)
+    for (size_t i = 0; i < m_xAreaSize; ++i)
     {
-        for (size_t j = m_yViewStartIndex; j < m_yViewSize; ++j)
+        for (size_t j = 0; j < m_yAreaSize; ++j)
         {
             int r = std::rand() % 10;
             if (r < 3)
@@ -92,31 +108,178 @@ bool GameOfLife::initializeArea()
     return true;
 }
 
+bool GameOfLife::initializeAreaFromFile()
+{
+    return true;
+}
+
 void GameOfLife::markDieCells() noexcept
 {
+    register unsigned char neighbor_counter = 0;
 
+    for (size_t i = 0; i < m_xAreaSize; ++i)
+    {
+        for (size_t j = 0; j < m_yAreaSize; ++j)
+        {
+            if (area[i][j].cell_exist)
+            {
+                neighbor_counter = neighborCounter(i, j);
+
+                if ((neighbor_counter < 2) || (neighbor_counter > 3))
+                {
+                    area[i][j].cell_will_die = true;
+                }
+                neighbor_counter = 0;
+            }
+        }
+    }
+}
+
+void GameOfLife::birthNewCells() noexcept
+{
+    register unsigned char neighbor_counter = 0;
+
+    for (size_t i = 0; i < m_xAreaSize; ++i)
+    {
+        for (size_t j = 0; j < m_yAreaSize; ++j)
+        {
+            if (area[i][j].cell_exist == false)
+            {
+                neighbor_counter = neighborCounter(i, j);
+
+                if (neighbor_counter == 3)
+                {
+                    area[i][j].cell_will_birth = true;
+                }
+                neighbor_counter = 0;
+            }
+        }
+    }
+
+    for (size_t i = 0; i < m_xAreaSize; ++i)
+    {
+        for (size_t j = 0; j < m_yAreaSize; ++j)
+        {
+            if (area[i][j].cell_will_birth == true)
+            {
+                area[i][j].cell_exist = true;
+                area[i][j].cell_will_birth = false;
+            }
+        }
+    }
+}
+
+void GameOfLife::removeDeadCells() noexcept
+{
+    for (size_t i = 0; i < m_xAreaSize; ++i)
+    {
+        for (size_t j = 0; j < m_yAreaSize; ++j)
+        {
+            if (area[i][j].cell_will_die)
+            {
+                area[i][j].cell_exist = false;
+                area[i][j].cell_will_die = false;
+            }
+        }
+    }
+}
+
+unsigned char GameOfLife::neighborCounter(size_t& i, size_t& j) noexcept
+{
+    unsigned char neighbor_counter = 0;
+
+    bool is_up_border    = (i > 0)               ? false : true;
+    bool is_right_border = (j < m_yAreaSize - 1) ? false : true;
+    bool is_down_border  = (i < m_xAreaSize - 1) ? false : true;
+    bool is_left_border  = (j > 0)               ? false : true;
+
+    // up
+    if (!is_up_border)
+    {
+        if (area[i - 1][j].cell_exist)
+        {
+            neighbor_counter++;
+        }
+    }
+    // up & right
+    if (!is_up_border && !is_right_border)
+    {
+        if (area[i - 1][j + 1].cell_exist)
+        {
+            neighbor_counter++;
+        }
+    }
+    // right
+    if (!is_right_border)
+    {
+        if (area[i][j + 1].cell_exist)
+        {
+            neighbor_counter++;
+        }
+    }
+    // right & down
+    if (!is_right_border && !is_down_border)
+    {
+        if (area[i + 1][j + 1].cell_exist)
+        {
+            neighbor_counter++;
+        }
+    }
+    // down
+    if (!is_down_border)
+    {
+        if (area[i + 1][j].cell_exist)
+        {
+            neighbor_counter++;
+        }
+    }
+    // down & left
+    if (!is_down_border && !is_left_border)
+    {
+        if (area[i + 1][j - 1].cell_exist)
+        {
+            neighbor_counter++;
+        }
+    }
+    // left
+    if (!is_left_border)
+    {
+        if (area[i][j - 1].cell_exist)
+        {
+            neighbor_counter++;
+        }
+    }
+    // left & up
+    if (!is_left_border && !is_up_border)
+    {
+        if (area[i - 1][j - 1].cell_exist)
+        {
+            neighbor_counter++;
+        }
+    }
+
+    return neighbor_counter;
 }
 
 void GameOfLife::show() const noexcept
 {
-    if (m_isInitialized)
-    {
-        system("cls");
+    // system("cls");
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleCursorPosition(hConsole, {0, 0});
 
-        for (size_t i = m_xViewStartIndex; i < m_xViewSize; ++i)
+    for (size_t i = m_xViewStartIndex; i < m_xViewSize; ++i)
+    {
+        for (size_t j = m_yViewStartIndex; j < m_yViewSize; ++j)
         {
-            for (size_t j = m_yViewStartIndex; j < m_yViewSize; ++j)
+            if (area[i][j].cell_exist)
             {
-                if (area[i][j].cell_exist)
-                {
-                    cout << "#";
-                }
-                else
-                {
-                    cout << " ";
-                }
+                cout << (char)178;
             }
-            cout << endl;
+            else
+            {
+                cout << " ";
+            }
         }
+        cout << endl;
     }
 }

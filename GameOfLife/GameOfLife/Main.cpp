@@ -3,8 +3,8 @@
 
 int main()
 {
-    system("MODE CON LINES=60 COLS=210");
+    system("MODE CON LINES=52 COLS=202");
 
     GameOfLife game_of_life(500, 500, 50, 200);
-    game_of_life.startTheGame(2);
+    game_of_life.startTheGame(200);
 }
