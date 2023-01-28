@@ -2,9 +2,13 @@
 #include <windows.h>
 #include <new>
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
 
 using std::cout;
 using std::endl;
+using std::getline;
 
 
 GameOfLife::GameOfLife(size_t xAreaSize, size_t yAreaSize, size_t xViewSize, size_t yViewSize) :
@@ -38,8 +42,8 @@ GameOfLife::GameOfLife(size_t xAreaSize, size_t yAreaSize, size_t xViewSize, siz
         m_yViewSize = m_yAreaSize;
     }
 
-    m_xViewStartIndex = ((m_xAreaSize - m_xViewSize) / 2);
-    m_yViewStartIndex = ((m_yAreaSize - m_yViewSize) / 2);
+    m_xViewStartIndex = (m_xAreaSize - m_xViewSize) / 2;
+    m_yViewStartIndex = (m_yAreaSize - m_yViewSize) / 2;
 
     m_xViewSize += m_xViewStartIndex;
     m_yViewSize += m_yViewStartIndex;
@@ -69,6 +73,10 @@ void GameOfLife::startTheGame(unsigned int ages, bool fromFile)
         if (fromFile)
         {
             initedArea = initializeAreaFromFile();
+            if (initedArea == false)
+            {
+                initedArea = initializeAreaRandomly();
+            }
         }
         else
         {
@@ -110,7 +118,38 @@ bool GameOfLife::initializeAreaRandomly()
 
 bool GameOfLife::initializeAreaFromFile()
 {
-    return true;
+    bool succes = false;
+    std::ifstream file("map.txt");
+
+    if (file.is_open())
+    {
+        std::vector<std::string> lines;
+
+        std::string line;
+        while (getline(file, line))
+        {
+            lines.push_back(line);
+        }
+        file.close();
+
+        size_t x_startIndex = (m_xAreaSize - lines.size()) / 2;
+        size_t y_startIndex = (m_yAreaSize - lines[0].size()) / 2;
+
+        for (size_t i = 0; i < lines.size(); ++i)
+        {
+            for (size_t j = 0; j < lines[i].size(); ++j)
+            {
+                if (lines[i].at(j) == 'x')
+                {
+                    area[x_startIndex + i][y_startIndex + j].cell_exist = true;
+                }
+            }
+        }
+
+        succes = true;
+    }
+
+    return succes;
 }
 
 void GameOfLife::markDieCells() noexcept
